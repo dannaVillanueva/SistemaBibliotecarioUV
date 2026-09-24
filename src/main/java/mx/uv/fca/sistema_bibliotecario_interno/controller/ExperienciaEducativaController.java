@@ -1,4 +1,4 @@
-package mx.uv.fca.sistema_bibliotecario_interno.Controller;
+package mx.uv.fca.sistema_bibliotecario_interno.controller;
 
 import mx.uv.fca.sistema_bibliotecario_interno.model.ExperienciaEducativa;
 import mx.uv.fca.sistema_bibliotecario_interno.service.ExperienciaEducativaService;

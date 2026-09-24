@@ -1,50 +1,49 @@
-package mx.uv.fca.sistema_bibliotecario_interno.Controller;
+package mx.uv.fca.sistema_bibliotecario_interno.model;
 
-import mx.uv.fca.sistema_bibliotecario_interno.model.Academia;
-import mx.uv.fca.sistema_bibliotecario_interno.service.AcademiaService;
+import mx.uv.fca.sistema_bibliotecario_interno.model.Editorial;
+import mx.uv.fca.sistema_bibliotecario_interno.service.EditorialService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/academias")
-public class AcademiaController {
+@RequestMapping("/api/editoriales")
+public class EditorialController {
 
-    private final AcademiaService service;
+    private final EditorialService service;
 
-    public AcademiaController(AcademiaService service) {
+    public EditorialController(EditorialService service) {
         this.service = service;
     }
 
     @GetMapping
-    public List<Academia> listar() {
+    public List<Editorial> listar() {
         return service.listar();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Academia> buscar(@PathVariable Integer id) {
+    public ResponseEntity<Editorial> buscar(@PathVariable Integer id) {
         return service.buscarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Academia guardar(@RequestBody Academia academia) {
-        return service.guardar(academia);
+    public Editorial guardar(@RequestBody Editorial editorial) {
+        return service.guardar(editorial);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Academia> actualizar(
+    public ResponseEntity<Editorial> actualizar(
             @PathVariable Integer id,
-            @RequestBody Academia academia) {
+            @RequestBody Editorial editorial) {
 
         return service.buscarPorId(id)
                 .map(existente -> {
 
-                    existente.setProgramasEducativos(
-                            academia.getProgramasEducativos()
-                    );
+                    existente.setNombre(editorial.getNombre());
+                    existente.setPaginaWeb(editorial.getPaginaWeb());
 
                     return ResponseEntity.ok(
                             service.guardar(existente)
