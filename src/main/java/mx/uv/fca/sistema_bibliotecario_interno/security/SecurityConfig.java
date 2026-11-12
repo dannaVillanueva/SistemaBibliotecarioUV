@@ -2,13 +2,11 @@ package mx.uv.fca.sistema_bibliotecario_interno.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -19,14 +17,11 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter) {
-
-        this.jwtAuthenticationFilter =
-                jwtAuthenticationFilter;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-
         return new BCryptPasswordEncoder();
     }
 
@@ -35,10 +30,7 @@ public class SecurityConfig {
             HttpSecurity http) throws Exception {
 
         http
-
-                .csrf(csrf ->
-                        csrf.disable()
-                )
+                .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -48,22 +40,40 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // LOGIN PÚBLICO
+                        // Inicio de sesión público
                         .requestMatchers(
+                                HttpMethod.POST,
                                 "/api/auth/login"
                         ).permitAll()
 
-                        // TODO LO DEMÁS REQUIERE
-                        // UNO DE LOS DOS ROLES
+                        // Solo el responsable puede administrar usuarios
+                        .requestMatchers("/api/usuarios", "/api/usuarios/**")
+                        .hasRole("RESPONSABLE_BIBLIOTECA")
+
+                        // Consulta de catálogos
                         .requestMatchers(
-                                "/api/**"
+                                HttpMethod.GET,
+                                "/api/editoriales",
+                                "/api/editoriales/**",
+                                "/api/programas-educativos",
+                                "/api/programas-educativos/**",
+                                "/api/academias",
+                                "/api/academias/**",
+                                "/api/experiencias",
+                                "/api/experiencias/**"
                         ).hasAnyRole(
                                 "RESPONSABLE_BIBLIOTECA",
                                 "PERSONAL_BIBLIOTECA"
                         )
 
-                        .anyRequest()
-                        .authenticated()
+                        // Resto de la API
+                        .requestMatchers("/api/**")
+                        .hasAnyRole(
+                                "RESPONSABLE_BIBLIOTECA",
+                                "PERSONAL_BIBLIOTECA"
+                        )
+
+                        .anyRequest().authenticated()
                 )
 
                 .addFilterBefore(

@@ -1,3 +1,4 @@
+
 package mx.uv.fca.sistema_bibliotecario_interno.service;
 
 import mx.uv.fca.sistema_bibliotecario_interno.dto.UsuarioResponseDTO;
@@ -57,8 +58,7 @@ public class UsuarioService {
             usuario.setActivo(true);
         }
 
-        Usuario guardado =
-                repository.save(usuario);
+        Usuario guardado = repository.save(usuario);
 
         return convertirDTO(guardado);
     }
@@ -74,27 +74,14 @@ public class UsuarioService {
             return Optional.empty();
         }
 
-        Usuario usuario =
-                usuarioOptional.get();
+        Usuario usuario = usuarioOptional.get();
 
-        usuario.setNombre(
-                datos.getNombre()
-        );
+        usuario.setNombre(datos.getNombre());
+        usuario.setCorreo(datos.getCorreo());
+        usuario.setRol(datos.getRol());
+        usuario.setActivo(datos.getActivo());
 
-        usuario.setCorreo(
-                datos.getCorreo()
-        );
-
-        usuario.setRol(
-                datos.getRol()
-        );
-
-        usuario.setActivo(
-                datos.getActivo()
-        );
-
-        Usuario actualizado =
-                repository.save(usuario);
+        Usuario actualizado = repository.save(usuario);
 
         return Optional.of(
                 convertirDTO(actualizado)
@@ -112,13 +99,11 @@ public class UsuarioService {
             return Optional.empty();
         }
 
-        Usuario usuario =
-                usuarioOptional.get();
+        Usuario usuario = usuarioOptional.get();
 
         usuario.setActivo(activo);
 
-        Usuario actualizado =
-                repository.save(usuario);
+        Usuario actualizado = repository.save(usuario);
 
         return Optional.of(
                 convertirDTO(actualizado)
@@ -128,12 +113,6 @@ public class UsuarioService {
     private UsuarioResponseDTO convertirDTO(
             Usuario usuario) {
 
-        return new UsuarioResponseDTO(
-                usuario.getIdUsuario(),
-                usuario.getNombre(),
-                usuario.getCorreo(),
-                usuario.getRol().name(),
-                usuario.getActivo()
-        );
+        return new UsuarioResponseDTO(usuario);
     }
 }

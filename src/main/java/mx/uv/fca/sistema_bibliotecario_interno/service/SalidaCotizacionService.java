@@ -7,46 +7,124 @@ import mx.uv.fca.sistema_bibliotecario_interno.model.DetalleCotizacion;
 import mx.uv.fca.sistema_bibliotecario_interno.model.RecursoDocumental;
 import mx.uv.fca.sistema_bibliotecario_interno.repository.CotizacionRepository;
 import mx.uv.fca.sistema_bibliotecario_interno.repository.DetalleCotizacionRepository;
+import mx.uv.fca.sistema_bibliotecario_interno.specification.DetalleCotizacionSpecification;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SalidaCotizacionService {
 
-    private final DetalleCotizacionRepository detalleRepository;
     private final CotizacionRepository cotizacionRepository;
+    private final DetalleCotizacionRepository detalleRepository;
 
     public SalidaCotizacionService(
-            DetalleCotizacionRepository detalleRepository,
-            CotizacionRepository cotizacionRepository) {
+            CotizacionRepository cotizacionRepository,
+            DetalleCotizacionRepository detalleRepository) {
 
-        this.detalleRepository = detalleRepository;
         this.cotizacionRepository = cotizacionRepository;
+        this.detalleRepository = detalleRepository;
     }
 
-    public CotizacionSalidaDTO obtenerSalida(
-            Integer idCotizacion) {
+    // SALIDA DE UNA COTIZACIÓN
+    public CotizacionSalidaDTO obtenerSalida(Integer idCotizacion) {
 
-        Cotizacion cotizacion =
-                cotizacionRepository
-                        .findById(idCotizacion)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Cotización no encontrada"
-                                )
-                        );
+        Cotizacion cotizacion = cotizacionRepository
+                .findById(idCotizacion)
+                .orElseThrow(() ->
+                        new RuntimeException("Cotización no encontrada"));
 
         List<DetalleCotizacion> detalles =
                 detalleRepository
-                        .findByCotizacion_IdCotizacion(
-                                idCotizacion
-                        );
+                        .findByCotizacion_IdCotizacion(idCotizacion);
 
-        List<SalidaCotizacionDTO> filas =
+        return convertirACotizacionSalida(cotizacion, detalles);
+    }
+
+
+    // BÚSQUEDA CON FILTROS
+    public List<CotizacionSalidaDTO> buscarCotizaciones(
+            String estado,
+            LocalDate fecha,
+            Integer idRecursoDocumental,
+            Integer idProgramaEducativo,
+            Integer idAcademia,
+            String filu) {
+
+        Specification<DetalleCotizacion> spec =
+                Specification.where(
+                                DetalleCotizacionSpecification.estadoIgual(estado)
+                        )
+                        .and(DetalleCotizacionSpecification.fechaIgual(fecha))
+                        .and(DetalleCotizacionSpecification.recursoIgual(
+                                idRecursoDocumental))
+                        .and(DetalleCotizacionSpecification.programaIgual(
+                                idProgramaEducativo))
+                        .and(DetalleCotizacionSpecification.academiaIgual(
+                                idAcademia))
+                        .and(DetalleCotizacionSpecification.filuIgual(filu));
+
+        List<DetalleCotizacion> resultados =
+                detalleRepository.findAll(spec);
+
+        /*
+         * Agrupamos los detalles encontrados por cotización.
+         *
+         * LinkedHashMap conserva el orden en que fueron encontrados.
+         */
+        Map<Integer, List<DetalleCotizacion>> agrupados =
+                new LinkedHashMap<>();
+
+        for (DetalleCotizacion detalle : resultados) {
+
+            Integer idCotizacion =
+                    detalle.getCotizacion().getIdCotizacion();
+
+            agrupados
+                    .computeIfAbsent(
+                            idCotizacion,
+                            key -> new ArrayList<>()
+                    )
+                    .add(detalle);
+        }
+
+        List<CotizacionSalidaDTO> salida =
+                new ArrayList<>();
+
+        for (Map.Entry<Integer, List<DetalleCotizacion>> entry
+                : agrupados.entrySet()) {
+
+            List<DetalleCotizacion> detallesFiltrados =
+                    entry.getValue();
+
+            Cotizacion cotizacion =
+                    detallesFiltrados.get(0).getCotizacion();
+
+            salida.add(
+                    convertirACotizacionSalida(
+                            cotizacion,
+                            detallesFiltrados
+                    )
+            );
+        }
+
+        return salida;
+    }
+
+
+    // CONVIERTE LA COTIZACIÓN AL DTO LIMPIO
+    private CotizacionSalidaDTO convertirACotizacionSalida(
+            Cotizacion cotizacion,
+            List<DetalleCotizacion> detalles) {
+
+        List<SalidaCotizacionDTO> detallesDTO =
                 new ArrayList<>();
 
         BigDecimal total = BigDecimal.ZERO;
@@ -60,7 +138,6 @@ public class SalidaCotizacionService {
                     new SalidaCotizacionDTO();
 
             if (detalle.getProgramaEducativo() != null) {
-
                 dto.setProgramaEducativo(
                         detalle
                                 .getProgramaEducativo()
@@ -69,7 +146,6 @@ public class SalidaCotizacionService {
             }
 
             if (detalle.getAcademia() != null) {
-
                 dto.setAcademia(
                         detalle
                                 .getAcademia()
@@ -79,20 +155,11 @@ public class SalidaCotizacionService {
 
             if (recurso != null) {
 
-                dto.setIsbn(
-                        recurso.getIsbn()
-                );
-
-                dto.setTitulo(
-                        recurso.getTitulo()
-                );
-
-                dto.setTipo(
-                        recurso.getTipo()
-                );
+                dto.setIsbn(recurso.getIsbn());
+                dto.setTitulo(recurso.getTitulo());
+                dto.setTipo(recurso.getTipo());
 
                 if (recurso.getEditorial() != null) {
-
                     dto.setEditorial(
                             recurso
                                     .getEditorial()
@@ -117,15 +184,13 @@ public class SalidaCotizacionService {
                     detalle.getFilu()
             );
 
-            // Sumar subtotal al total general
             if (detalle.getSubtotal() != null) {
-
                 total = total.add(
                         detalle.getSubtotal()
                 );
             }
 
-            filas.add(dto);
+            detallesDTO.add(dto);
         }
 
         CotizacionSalidaDTO salida =
@@ -149,7 +214,7 @@ public class SalidaCotizacionService {
 
         salida.setTotal(total);
 
-        salida.setDetalles(filas);
+        salida.setDetalles(detallesDTO);
 
         return salida;
     }

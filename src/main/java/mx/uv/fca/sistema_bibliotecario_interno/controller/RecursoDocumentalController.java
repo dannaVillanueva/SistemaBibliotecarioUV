@@ -1,7 +1,10 @@
 package mx.uv.fca.sistema_bibliotecario_interno.controller;
 
+import mx.uv.fca.sistema_bibliotecario_interno.dto.RecursoDocumentalRequestDTO;
 import mx.uv.fca.sistema_bibliotecario_interno.model.RecursoDocumental;
 import mx.uv.fca.sistema_bibliotecario_interno.service.RecursoDocumentalService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +18,7 @@ public class RecursoDocumentalController {
 
     public RecursoDocumentalController(
             RecursoDocumentalService service) {
+
         this.service = service;
     }
 
@@ -59,11 +63,36 @@ public class RecursoDocumentalController {
         );
     }
 
+    // Registro original: se conserva temporalmente
+    // para no afectar el formulario Angular actual.
     @PostMapping
     public RecursoDocumental guardar(
             @RequestBody RecursoDocumental recurso) {
 
         return service.guardar(recurso);
+    }
+
+    // Nuevo registro con editorial y vinculaciones
+    // académicas específicas.
+    @PostMapping("/registro")
+    public ResponseEntity<RecursoDocumental> registrar(
+            @RequestBody RecursoDocumentalRequestDTO request) {
+
+        RecursoDocumental guardado =
+                service.registrarConVinculaciones(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(guardado);
+    }
+
+    @PutMapping("/{id}/edicion")
+    public ResponseEntity<RecursoDocumental> editarCompleto(
+            @PathVariable Integer id,
+            @RequestBody RecursoDocumentalRequestDTO request) {
+        return service.actualizarConVinculaciones(id, request)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
@@ -81,13 +110,26 @@ public class RecursoDocumentalController {
                     existente.setIsbn(recurso.getIsbn());
                     existente.setCantidad(recurso.getCantidad());
                     existente.setMovimiento(recurso.getMovimiento());
+
                     existente.setEnCatalogoBiblioFca(
-                            recurso.getEnCatalogoBiblioFca());
-                    existente.setObservaciones(recurso.getObservaciones());
+                            recurso.getEnCatalogoBiblioFca()
+                    );
+
+                    existente.setObservaciones(
+                            recurso.getObservaciones()
+                    );
+
                     existente.setTipo(recurso.getTipo());
+                    existente.setFormato(recurso.getFormato());
+                    existente.setUrlRecurso("ELECTRONICO".equals(recurso.getFormato()) ? recurso.getUrlRecurso() : null);
                     existente.setEditorial(recurso.getEditorial());
+
                     existente.setExperienciasEducativas(
-                            recurso.getExperienciasEducativas());
+                            recurso.getExperienciasEducativas()
+                    );
+
+                    // Las nuevas vinculaciones académicas
+                    // se conservan sin cambios en este endpoint.
 
                     return ResponseEntity.ok(
                             service.guardar(existente)
@@ -97,7 +139,8 @@ public class RecursoDocumentalController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Void> eliminar(
+            @PathVariable Integer id) {
 
         if (service.buscarPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();

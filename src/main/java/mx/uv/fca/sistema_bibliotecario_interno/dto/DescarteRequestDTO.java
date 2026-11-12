@@ -8,39 +8,26 @@ public class DescarteRequestDTO {
     private String motivo;
     private String observaciones;
     private Integer idRecursoDocumental;
+    private Integer cantidad;
 
-    public DescarteRequestDTO() {
-    }
+    public DescarteRequestDTO() {}
 
-    public LocalDate getFechaDescarte() {
-        return fechaDescarte;
-    }
+    public LocalDate getFechaDescarte() { return fechaDescarte; }
+    public void setFechaDescarte(LocalDate v) { fechaDescarte = v; }
 
-    public void setFechaDescarte(LocalDate fechaDescarte) {
-        this.fechaDescarte = fechaDescarte;
-    }
+    public String getMotivo() { return motivo; }
+    public void setMotivo(String v) { motivo = v; }
 
-    public String getMotivo() {
-        return motivo;
-    }
-
-    public void setMotivo(String motivo) {
-        this.motivo = motivo;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
+    public String getObservaciones() { return observaciones; }
+    public void setObservaciones(String v) { observaciones = v; }
 
     public Integer getIdRecursoDocumental() {
         return idRecursoDocumental;
     }
-
-    public void setIdRecursoDocumental(Integer idRecursoDocumental) {
-        this.idRecursoDocumental = idRecursoDocumental;
+    public void setIdRecursoDocumental(Integer v) {
+        idRecursoDocumental = v;
     }
+
+    public Integer getCantidad() { return cantidad; }
+    public void setCantidad(Integer v) { cantidad = v; }
 }

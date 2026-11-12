@@ -16,6 +16,13 @@ public class ProgramaEducativo {
 
     private String nombreCorto;
 
+    @Column(name = "modalidad", length = 100)
+    private String modalidad;
+
+    public String getModalidad() { return modalidad; }
+
+    public void setModalidad(String modalidad) { this.modalidad = modalidad; }
+
     public ProgramaEducativo() {
     }
 

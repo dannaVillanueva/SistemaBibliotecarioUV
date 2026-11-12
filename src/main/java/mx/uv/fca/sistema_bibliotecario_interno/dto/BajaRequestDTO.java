@@ -8,6 +8,7 @@ public class BajaRequestDTO {
     private String motivo;
     private String observaciones;
     private Integer idRecursoDocumental;
+    private Integer cantidad;
 
     public BajaRequestDTO() {
     }
@@ -42,7 +43,14 @@ public class BajaRequestDTO {
 
     public void setIdRecursoDocumental(
             Integer idRecursoDocumental) {
-
         this.idRecursoDocumental = idRecursoDocumental;
+    }
+
+    public Integer getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(Integer cantidad) {
+        this.cantidad = cantidad;
     }
 }

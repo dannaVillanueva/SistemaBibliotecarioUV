@@ -9,9 +9,12 @@ import mx.uv.fca.sistema_bibliotecario_interno.repository.BajaRepository;
 import mx.uv.fca.sistema_bibliotecario_interno.repository.RecursoDocumentalRepository;
 import mx.uv.fca.sistema_bibliotecario_interno.repository.UsuarioRepository;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,44 +36,105 @@ public class BajaService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    @Transactional
     public BajaResponseDTO registrar(BajaRequestDTO datos) {
+
+        if (datos == null ||
+                datos.getIdRecursoDocumental() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debes seleccionar un recurso documental"
+            );
+        }
+
+        if (datos.getCantidad() == null ||
+                datos.getCantidad() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La cantidad debe ser mayor que cero"
+            );
+        }
+
+        if (datos.getMotivo() == null ||
+                datos.getMotivo().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El motivo de la baja es obligatorio"
+            );
+        }
+
         RecursoDocumental recurso = recursoRepository
                 .findById(datos.getIdRecursoDocumental())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
                                 "No existe el recurso documental"
                         )
                 );
+
+        int disponibles = recurso.getCantidad() == null
+                ? 0
+                : recurso.getCantidad();
+
+        if (datos.getCantidad() > disponibles) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No hay suficientes ejemplares. Disponibles: "
+                            + disponibles
+            );
+        }
+
         Authentication authentication =
                 SecurityContextHolder
                         .getContext()
                         .getAuthentication();
+
+        if (authentication == null ||
+                !authentication.isAuthenticated() ||
+                "anonymousUser".equals(authentication.getName())) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Debes iniciar sesión para registrar una baja"
+            );
+        }
+
         String correo = authentication.getName();
+
         Usuario usuario = usuarioRepository
                 .findByCorreo(correo)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
                                 "No se encontró el usuario autenticado"
                         )
                 );
+
+        recurso.setCantidad(
+                disponibles - datos.getCantidad()
+        );
+
+        recursoRepository.save(recurso);
+
         Baja baja = new Baja();
 
         baja.setRecursoDocumental(recurso);
         baja.setUsuario(usuario);
-        baja.setMotivo(datos.getMotivo());
+        baja.setCantidad(datos.getCantidad());
+        baja.setMotivo(datos.getMotivo().trim());
         baja.setObservaciones(datos.getObservaciones());
 
-        if (datos.getFechaBaja() != null) {
-            baja.setFechaBaja(datos.getFechaBaja());
-        } else {
-            baja.setFechaBaja(LocalDate.now());
-        }
+        baja.setFechaBaja(
+                datos.getFechaBaja() != null
+                        ? datos.getFechaBaja()
+                        : LocalDate.now()
+        );
 
         Baja guardada = bajaRepository.save(baja);
 
         return convertirDTO(guardada);
     }
 
+    @Transactional(readOnly = true)
     public List<BajaResponseDTO> listar() {
 
         return bajaRepository.findAll()
@@ -79,12 +143,13 @@ public class BajaService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public BajaResponseDTO buscarPorId(Integer id) {
 
-        Baja baja = bajaRepository
-                .findById(id)
+        Baja baja = bajaRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
                                 "No existe la baja"
                         )
                 );
@@ -92,6 +157,7 @@ public class BajaService {
         return convertirDTO(baja);
     }
 
+    @Transactional(readOnly = true)
     public List<BajaResponseDTO> buscarPorRecurso(
             Integer idRecursoDocumental) {
 
@@ -117,11 +183,10 @@ public class BajaService {
                 baja.getFechaBaja(),
                 baja.getMotivo(),
                 baja.getObservaciones(),
-
+                baja.getCantidad(),
                 recurso.getIdRecursoDocumental(),
                 recurso.getTitulo(),
                 recurso.getIsbn(),
-
                 usuario.getIdUsuario(),
                 usuario.getNombre()
         );

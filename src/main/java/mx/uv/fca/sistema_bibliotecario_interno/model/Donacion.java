@@ -12,6 +12,9 @@ public class Donacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idDonacion;
 
+    @Column(nullable = false)
+    private Integer cantidad = 1;
+
     private String nombreDonante;
 
     private LocalDate fechaDonacion;
@@ -24,6 +27,9 @@ public class Donacion {
     @ManyToOne
     @JoinColumn(name = "id_recurso_documental", nullable = false)
     private RecursoDocumental recursoDocumental;
+
+    public Integer getCantidad() { return cantidad; }
+    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
 
     public Donacion() {
     }

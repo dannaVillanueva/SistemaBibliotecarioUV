@@ -8,6 +8,7 @@ public class BajaResponseDTO {
     private LocalDate fechaBaja;
     private String motivo;
     private String observaciones;
+    private Integer cantidad;
 
     private Integer idRecursoDocumental;
     private String tituloRecurso;
@@ -24,6 +25,7 @@ public class BajaResponseDTO {
             LocalDate fechaBaja,
             String motivo,
             String observaciones,
+            Integer cantidad,
             Integer idRecursoDocumental,
             String tituloRecurso,
             String isbn,
@@ -34,6 +36,7 @@ public class BajaResponseDTO {
         this.fechaBaja = fechaBaja;
         this.motivo = motivo;
         this.observaciones = observaciones;
+        this.cantidad = cantidad;
         this.idRecursoDocumental = idRecursoDocumental;
         this.tituloRecurso = tituloRecurso;
         this.isbn = isbn;
@@ -71,6 +74,14 @@ public class BajaResponseDTO {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public Integer getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(Integer cantidad) {
+        this.cantidad = cantidad;
     }
 
     public Integer getIdRecursoDocumental() {

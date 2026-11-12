@@ -46,6 +46,7 @@ public class ProgramaEducativoController {
                         programaExistente.setNombre(programa.getNombre());
                         programaExistente.setAnio(programa.getAnio());
                         programaExistente.setNombreCorto(programa.getNombreCorto());
+                         programaExistente.setModalidad(programa.getModalidad());
 
                         return ResponseEntity.ok(
                                 service.guardar(programaExistente)

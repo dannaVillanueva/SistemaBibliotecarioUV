@@ -1,7 +1,6 @@
 package mx.uv.fca.sistema_bibliotecario_interno.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 
 @Entity
@@ -22,14 +21,17 @@ public class Baja {
     @Column(length = 1000)
     private String observaciones;
 
-    @ManyToOne
+    @Column(name = "cantidad", nullable = false)
+    private Integer cantidad;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "id_recurso_documental",
             nullable = false
     )
     private RecursoDocumental recursoDocumental;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "id_usuario",
             nullable = false
@@ -71,13 +73,20 @@ public class Baja {
         this.observaciones = observaciones;
     }
 
+    public Integer getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(Integer cantidad) {
+        this.cantidad = cantidad;
+    }
+
     public RecursoDocumental getRecursoDocumental() {
         return recursoDocumental;
     }
 
     public void setRecursoDocumental(
             RecursoDocumental recursoDocumental) {
-
         this.recursoDocumental = recursoDocumental;
     }
 

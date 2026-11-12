@@ -1,4 +1,4 @@
-package mx.uv.fca.sistema_bibliotecario_interno.model;
+package mx.uv.fca.sistema_bibliotecario_interno.controller;
 
 import mx.uv.fca.sistema_bibliotecario_interno.model.Editorial;
 import mx.uv.fca.sistema_bibliotecario_interno.service.EditorialService;
